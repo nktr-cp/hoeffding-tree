@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -O2 -g -Wall -Iinc
+CXXFLAGS = -std=c++20 -O3 -g -Wall -Iinc
 
 TARGET = vfdt
 
@@ -20,24 +20,21 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: tidy
-tidy:
-	echo "--- Generating compile database and running clang-tidy ---"
-	bear -- make
-	clang-tidy -p . $(SOURCES)
-
-.PHONY: tidy-fix
-tidy-fix:
-	@echo "--- Generating compile database and applying fixes with clang-tidy ---"
-	@bear -- make > /dev/null 2>&1
-	@run-clang-tidy.py -p . -fix
-	@echo "--- Applying clang-format for consistency ---"
-	@clang-format -i -style=file $(SOURCES)
-
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET)
 
+.PHONY: re
+re: clean all
+
 .PHONY: run
 run: all
 	./$(TARGET)
+
+.PHONY: lint
+lint:
+	clang-tidy --config-file=.clang-tidy $(SOURCES) -- $(CXXFLAGS)
+
+.PHONY: fix
+fix:
+	clang-tidy --fix --config-file=.clang-tidy $(SOURCES) -- $(CXXFLAGS)
